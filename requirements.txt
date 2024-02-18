@@ -1,0 +1,6 @@
+azure-devops==7.1.0b4
+azure-identity==1.15.0
+azure-mgmt-compute==30.5.0
+azure-mgmt-core==1.4.0
+discord.py==2.3.2
+flask==3.0.1
