@@ -1,5 +1,6 @@
 from azure.identity import ClientSecretCredential
 from azure.mgmt.compute import ComputeManagementClient
+import asyncio
 import os
 import discord
 from keep_alive import keep_alive
@@ -49,25 +50,30 @@ async def on_slash_command(interaction: discord.Interaction, action: str):
     await interaction.response.defer()
     operation = compute_client.virtual_machines.begin_start(
         resource_group_name, vm_name)
-    operation.wait()
+    await asyncio.to_thread(operation.wait)
     embed = discord.Embed(title=":white_check_mark: 起動しました",
                           description="PalServerが起動しました")
     embed.add_field(name="アドレス", value=address)
     embed.add_field(name="パスワード", value=password)
     await interaction.followup.send(embed=embed)
   if action == 'stop':
-    operation = compute_client.virtual_machines.begin_deallocate(
+    await asyncio.to_thread(
+        compute_client.virtual_machines.begin_deallocate,
         resource_group_name, vm_name)
     embed = discord.Embed(title=":octagonal_sign: 停止しました",
                           description="PalServerを停止します")
     embed.add_field(name="注意", value="少し待たないと起動できません")
     await interaction.response.send_message(embed=embed)
   if action == 'status':
-    vm = compute_client.virtual_machines.get(resource_group_name, vm_name)
-    if vm is not None:
-      status = vm.instance_view.statuses
+    instance_view = await asyncio.to_thread(
+        compute_client.virtual_machines.instance_view,
+        resource_group_name, vm_name)
+    statuses = instance_view.statuses
+    if statuses:
+      description = "\n".join(
+          f"{s.code} ({s.display_status})" for s in statuses)
       embed = discord.Embed(title=":information_source: サーバーステータス",
-                            description=status)
+                            description=description)
     else:
       embed = discord.Embed(title=":thinking: ステータスエラー",
                             description="ステータスを取得できませんでした")
