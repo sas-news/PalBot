@@ -2,3 +2,4 @@
 /.pythonlibs
 /.replit
 /.upm
+__pycache__/
